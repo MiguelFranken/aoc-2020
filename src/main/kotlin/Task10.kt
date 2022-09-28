@@ -1,4 +1,7 @@
+import mu.KotlinLogging
 import java.io.File
+
+private val logger = KotlinLogging.logger {}
 
 fun main() {
     part1()
@@ -13,7 +16,8 @@ private fun part1() {
 
     val differences = jolts.windowed(2).map { it.last() - it.first() }
     val part1 = differences.count { it == 1 } * differences.count { it == 3 }
-    println("Part 1: $part1")
+
+    logger.info { "Part 1: $part1" }
 }
 
 fun part2() {
@@ -21,6 +25,7 @@ fun part2() {
         this += max() + 3
     }.toList().sorted()
 
+    // Dynamic Programming: Memoize number of paths to jolt n
     // #paths_0_to_n = #paths_0_to_n-1 + #paths_0_to_n-2 + #paths_0_to_n-3
     val options: MutableMap<Int, Long> = mutableMapOf(0 to 1L)
     jolts.forEach { targetJolts ->
@@ -29,5 +34,9 @@ fun part2() {
         }
         options += targetJolts to sum
     }
-    println("Part 2: ${options[jolts.max()]}")
+
+    logger.info {
+        val part2 = options[jolts.max()]
+        "Part 2: $part2"
+    }
 }
