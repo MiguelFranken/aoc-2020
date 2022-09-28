@@ -7,39 +7,63 @@ enum class Operation(val representation: String) {
         fun from(type: String?): Operation = values().find { it.representation == type } ?: NOP
     }
 }
-data class Instruction(val operation: Operation, val arg: Int) {
-    companion object {
-        fun fromString(line: String): Instruction {
-            val (op, arg) = line.split(" ")
-            return Instruction(Operation.from(op), arg.toInt())
-        }
+
+typealias InstructionPointer = Int
+
+data class MachineState(val ip: InstructionPointer, val acc: Int)
+
+sealed class Instruction(val action: (MachineState) -> MachineState)
+
+class Nop(val value: Int): Instruction({ MachineState(it.ip + 1, it.acc) })
+class Acc(private val value: Int): Instruction({ MachineState(it.ip + 1, it.acc + value) })
+class Jmp(val value: Int): Instruction({ MachineState(it.ip + value, it.acc) })
+
+fun Instruction(s: String): Instruction {
+    val (op, arg) = s.split(" ")
+    val value = arg.toInt()
+    return when (Operation.from(op)) {
+        Operation.NOP -> Nop(value)
+        Operation.ACC -> Acc(value)
+        Operation.JMP -> Jmp(value)
     }
 }
+
+fun execute(instructions: List<Instruction>): MachineState {
+    var state = MachineState(0, 0)
+
+    val encounteredIndices = mutableSetOf<InstructionPointer>()
+
+    while (state.ip in instructions.indices) {
+        val nextInstruction = instructions[state.ip]
+        state = nextInstruction.action(state)
+
+        if (state.ip in encounteredIndices) return state
+        encounteredIndices += state.ip
+    }
+
+    println("No loop found! Program terminates!")
+
+    return state
+}
+
+fun generateAllMutations(instructions: List<Instruction>): Sequence<List<Instruction>> =
+    sequence {
+        for ((index, instruction) in instructions.withIndex()) {
+            val newProgram = instructions.toMutableList()
+            newProgram[index] = when (instruction) {
+                is Acc -> continue
+                is Jmp -> Nop(instruction.value)
+                is Nop -> Jmp(instruction.value)
+            }
+            yield(newProgram)
+        }
+    }
 
 fun main() {
-    val value = getAccumulatorValue()
-    println("Accumulator Value: $value")
-}
+    val instructions = File("src/main/resources/Task8.txt").readLines().map(::Instruction)
+    val state = execute(instructions)
+    println(state)
 
-fun getAccumulatorValue(): Int {
-    val operations = File("src/main/resources/Task8.txt").readLines().map(Instruction::fromString)
-
-    val visited = mutableSetOf<Int>()
-    var accumulator = 0
-    var counter = 0
-    while (counter < operations.size && !visited.contains(counter)) {
-        visited += counter
-
-        val instruction = operations[counter]
-        when (instruction.operation) {
-            Operation.NOP -> counter++
-            Operation.ACC -> {
-                counter++
-                accumulator += instruction.arg
-            }
-            Operation.JMP -> counter += instruction.arg
-        }
-    }
-
-    return accumulator
+    val fixedState = generateAllMutations(instructions).map(::execute).first { it.ip !in instructions.indices }
+    println(fixedState)
 }
