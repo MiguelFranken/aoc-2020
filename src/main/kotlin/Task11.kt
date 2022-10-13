@@ -12,8 +12,29 @@ enum class GridPosition(val char: Char) {
 }
 
 typealias Grid = List<List<GridPosition>>
+typealias MutableGrid = MutableList<MutableList<GridPosition>>
 
 fun main() {
+    task1()
+    task2()
+}
+
+fun task1() {
+    val grid: Grid = File("src/main/resources/Task11.txt").readLines().map { line -> line.map(GridPosition::fromChar) }
+
+    var oldGrid = grid.toList()
+    var newGrid = grid.toList()
+    do {
+        oldGrid = newGrid
+        newGrid = applyRulesSimple(oldGrid)
+    } while (oldGrid != newGrid)
+
+    val count = countOccupied(newGrid)
+    println("Count Task 1: $count")
+    require(count == 2319)
+}
+
+fun task2() {
     val grid: Grid = File("src/main/resources/Task11.txt").readLines().map { line -> line.map(GridPosition::fromChar) }
 
     var oldGrid = grid.toList()
@@ -24,8 +45,8 @@ fun main() {
     } while (oldGrid != newGrid)
 
     val count = countOccupied(newGrid)
-    println("Count: $count")
-    require(count == 2319)
+    println("Count Task 2: $count")
+    require(count == 2117)
 }
 
 fun countOccupied(grid: Grid): Int = grid.flatten().count { it == GridPosition.OCCUPIED }
@@ -45,8 +66,46 @@ val adjacentVectors = listOf<Vector>(
     Vector(-1, 0), // left
 )
 
+fun Grid.toMutable(): MutableGrid = map { row -> row.toMutableList() }.toMutableList()
+
+fun Grid.findVisibleSeat(start: Vector, direction: Vector): GridPosition? {
+    var currentVector = start + direction
+    while (currentVector.x in this[0].indices && currentVector.y in indices) {
+        val position = this[currentVector.y][currentVector.x]
+        if (position == GridPosition.OCCUPIED || position == GridPosition.EMPTY) {
+            return position
+        }
+
+        currentVector += direction
+    }
+
+    return null
+}
+
 fun applyRules(grid: Grid): Grid {
-    val newGrid: MutableList<MutableList<GridPosition>> = grid.map { row -> row.toMutableList() }.toMutableList()
+    val transformedGrid: MutableGrid = grid.toMutable()
+
+    grid.forEachIndexed { rowIndex, row ->
+        row.forEachIndexed { columnIndex, cell ->
+            val start = Vector(columnIndex, rowIndex)
+
+            val positions = adjacentVectors.mapNotNull { direction -> grid.findVisibleSeat(start, direction) }
+
+            if (cell == GridPosition.EMPTY && !positions.contains(GridPosition.OCCUPIED)) {
+                // If a seat is empty (L) and there are no occupied seats adjacent to it, the seat becomes occupied.
+                transformedGrid[rowIndex][columnIndex] = GridPosition.OCCUPIED
+            } else if (cell == GridPosition.OCCUPIED && positions.count { it == GridPosition.OCCUPIED } >= 5) {
+                // five or more visible occupied seats for an occupied seat to become empty
+                transformedGrid[rowIndex][columnIndex] = GridPosition.EMPTY
+            }
+        }
+    }
+
+    return transformedGrid
+}
+
+fun applyRulesSimple(grid: Grid): Grid {
+    val transformedGrid: MutableGrid = grid.toMutable()
 
     grid.forEachIndexed { rowIndex, row ->
         row.forEachIndexed { columnIndex, cell ->
@@ -60,13 +119,13 @@ fun applyRules(grid: Grid): Grid {
 
             if (cell == GridPosition.EMPTY && !adjacent.contains(GridPosition.OCCUPIED)) {
                 // If a seat is empty (L) and there are no occupied seats adjacent to it, the seat becomes occupied.
-                newGrid[rowIndex][columnIndex] = GridPosition.OCCUPIED
+                transformedGrid[rowIndex][columnIndex] = GridPosition.OCCUPIED
             } else if (cell == GridPosition.OCCUPIED && adjacent.count { it == GridPosition.OCCUPIED } >= 4) {
                 // If a seat is occupied (#) and four or more seats adjacent to it are also occupied, the seat becomes empty.
-                newGrid[rowIndex][columnIndex] = GridPosition.EMPTY
+                transformedGrid[rowIndex][columnIndex] = GridPosition.EMPTY
             }
         }
     }
 
-    return newGrid
+    return transformedGrid
 }
