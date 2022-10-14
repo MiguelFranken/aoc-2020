@@ -1,6 +1,7 @@
 package task12.a
 
 import common.Vector
+import common.splitAtIndex
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs
@@ -22,8 +23,6 @@ data class ShipState(val vector: Vector, val heading: Direction) {
 }
 
 sealed class ShipInstruction(val action: (ShipState) -> ShipState)
-
-fun String.splitAtIndex(index: Int) = take(index) to substring(index)
 
 fun ShipInstruction(s: String): ShipInstruction {
     val (ins, value) = s.splitAtIndex(1).let { Pair(it.first, it.second.toInt()) }
