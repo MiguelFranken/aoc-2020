@@ -2,70 +2,48 @@ package task12.a
 
 import common.Direction
 import common.Vector
-import common.splitAtIndex
+import task12.*
 import java.io.File
-import java.lang.Exception
-import kotlin.math.abs
 
-data class ShipState(val vector: Vector, val heading: Direction) {
-    fun distance(): Int = abs(vector.x) + abs(vector.y)
-}
+data class ShipStateA(override val vector: Vector, val heading: Direction): ShipState(vector)
 
-sealed class ShipInstruction(val action: (ShipState) -> ShipState)
-
-fun ShipInstruction(s: String): ShipInstruction {
-    val (ins, value) = s.splitAtIndex(1).let { Pair(it.first, it.second.toInt()) }
-    return when (ins) {
-        "F" -> MoveForward(value)
-        "N" -> MoveDirection(Direction.NORTH, value)
-        "E" -> MoveDirection(Direction.EAST, value)
-        "S" -> MoveDirection(Direction.SOUTH, value)
-        "W" -> MoveDirection(Direction.WEST, value)
-        "L" -> Turn(-value)
-        "R" -> Turn(value)
-        else -> throw Exception("Operation Not Supported")
-    }
-}
-
-data class MoveDirection(
-    private val direction: Direction,
-    private val distance: Int
-): ShipInstruction({
-    val vector = it.vector + when (direction) {
-        Direction.NORTH -> Vector(0, distance)
-        Direction.SOUTH -> Vector(0, -distance)
-        Direction.EAST -> Vector(distance, 0)
-        Direction.WEST -> Vector(-distance, 0)
+data class MoveDirectionAction(private val instruction: MoveDirection): ShipAction<ShipStateA>({
+    val vector = it.vector + when (instruction.direction) {
+        Direction.NORTH -> Vector(0, instruction.distance)
+        Direction.SOUTH -> Vector(0, -instruction.distance)
+        Direction.EAST -> Vector(instruction.distance, 0)
+        Direction.WEST -> Vector(-instruction.distance, 0)
     }
 
-    ShipState(vector, it.heading)
+    ShipStateA(vector, it.heading)
 })
 
-data class MoveForward(private val distance: Int): ShipInstruction({
+data class MoveForwardAction(private val instruction: MoveForward): ShipAction<ShipStateA>({
     val vector = it.vector + when (it.heading) {
-        Direction.NORTH -> Vector(0, distance)
-        Direction.SOUTH -> Vector(0, -distance)
-        Direction.EAST -> Vector(distance, 0)
-        Direction.WEST -> Vector(-distance, 0)
+        Direction.NORTH -> Vector(0, instruction.distance)
+        Direction.SOUTH -> Vector(0, -instruction.distance)
+        Direction.EAST -> Vector(instruction.distance, 0)
+        Direction.WEST -> Vector(-instruction.distance, 0)
     }
-    ShipState(vector, it.heading)
+    ShipStateA(vector, it.heading)
 })
 
-data class Turn(private val degree: Int): ShipInstruction({
-    ShipState(it.vector, it.heading.turn(degree))
+data class TurnAction(private val instruction: Turn): ShipAction<ShipStateA>({
+    ShipStateA(it.vector, it.heading.turn(instruction.degree))
 })
 
 fun main() {
-    val instructions = File("src/main/resources/Task12.txt").readLines().map(::ShipInstruction)
-    val state = execute(instructions)
+    val instructions = File("src/main/resources/Task12.txt").readLines().map {
+        ShipInstruction.create(it) { instruction ->
+            when (instruction) {
+                is MoveDirection -> MoveDirectionAction(instruction)
+                is MoveForward -> MoveForwardAction(instruction)
+                is Turn -> TurnAction(instruction)
+            }
+        }
+    }
+
+    val state = ShipStateA(Vector(0,0), Direction.EAST).execute(instructions)
     println("Distance: ${state.distance()}")
     require(state.distance() == 757)
-}
-
-fun execute(instructions: List<ShipInstruction>): ShipState {
-    var state = ShipState(Vector(0,0), Direction.EAST)
-    instructions.forEach { instruction ->
-        state = instruction.action(state)
-    }
-    return state
 }
