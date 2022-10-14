@@ -1,6 +1,11 @@
+package task12.a
+
+import Vector
+import plus
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs
+
 
 enum class Direction {
     NORTH, EAST,

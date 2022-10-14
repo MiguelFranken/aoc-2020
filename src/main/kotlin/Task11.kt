@@ -52,6 +52,8 @@ data class Vector(val x: Int, val y: Int)
 
 operator fun Vector.plus(vector: Vector): Vector = Vector(x + vector.x, y + vector.y)
 
+operator fun Vector.times(scalar: Int): Vector = Vector(x * scalar, y * scalar)
+
 val directions = listOf<Vector>(
     Vector(-1, -1), // top left
     Vector(0, -1), // top
