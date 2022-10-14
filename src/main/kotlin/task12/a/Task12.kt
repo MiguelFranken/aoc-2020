@@ -1,7 +1,6 @@
 package task12.a
 
-import Vector
-import plus
+import common.Vector
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs

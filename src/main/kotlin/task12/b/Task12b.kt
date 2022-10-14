@@ -1,10 +1,8 @@
 package task12.b
 
-import Vector
-import plus
+import common.Vector
 import task12.a.Direction
 import task12.a.splitAtIndex
-import times
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs

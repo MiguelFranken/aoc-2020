@@ -1,3 +1,4 @@
+import common.Vector
 import java.io.File
 import java.lang.Exception
 
@@ -47,12 +48,6 @@ fun Grid.applyUntilStabilizes(apply: Grid.() -> Grid): Grid {
 }
 
 fun countOccupied(grid: Grid): Int = grid.flatten().count { it == GridPosition.OCCUPIED }
-
-data class Vector(val x: Int, val y: Int)
-
-operator fun Vector.plus(vector: Vector): Vector = Vector(x + vector.x, y + vector.y)
-
-operator fun Vector.times(scalar: Int): Vector = Vector(x * scalar, y * scalar)
 
 val directions = listOf<Vector>(
     Vector(-1, -1), // top left
