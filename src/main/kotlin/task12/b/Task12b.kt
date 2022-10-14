@@ -1,8 +1,8 @@
 package task12.b
 
+import common.Direction
 import common.Vector
 import common.splitAtIndex
-import task12.a.Direction
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs

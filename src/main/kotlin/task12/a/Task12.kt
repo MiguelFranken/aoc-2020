@@ -1,22 +1,11 @@
 package task12.a
 
+import common.Direction
 import common.Vector
 import common.splitAtIndex
 import java.io.File
 import java.lang.Exception
 import kotlin.math.abs
-
-
-enum class Direction {
-    NORTH, EAST,
-    SOUTH, WEST;
-
-    /**
-     * Turn direction by specified degree.
-     * Allowed degrees: Multiplies of 90
-     */
-    fun turn(degree: Int): Direction = values()[(((values().indexOf(this) + degree/90) % 4) + 4) % 4]
-}
 
 data class ShipState(val vector: Vector, val heading: Direction) {
     fun distance(): Int = abs(vector.x) + abs(vector.y)
