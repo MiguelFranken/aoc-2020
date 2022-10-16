@@ -21,9 +21,8 @@ class Task14(private val input: List<String>) {
             if (instruction.startsWith("mask")) {
                 mask = instruction.substringAfter("= ")
             } else {
-                val address = instruction.substringAfter("[").substringBefore("]").toLong()
-                val value = instruction.substringAfter("= ")
-                memory[address] = value maskedWith mask
+                val (address, value) = memoryRegex.find(instruction)!!.destructured
+                memory[address.toLong()] = value maskedWith mask
             }
         }
 
@@ -32,5 +31,7 @@ class Task14(private val input: List<String>) {
 
     companion object {
         const val DEFAULT_MASK = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+        private val memoryRegex = """mem\[(\d+)] = (\d+)""".toRegex()
     }
 }
